@@ -220,19 +220,19 @@
                       Tổng cộng <span>{{ formatPrice(total) }}</span>
                     </li>
                   </ul>
-                  <div class="checkout__input__checkbox">
-                    <label for="payment">
-                      Thanh toán khi nhận hàng
-                      <input type="checkbox" id="payment" v-model="paymentMethod" value="cod" />
-                      <span class="checkmark"></span>
-                    </label>
+                  <div class="mb-3">
+                    <label for="paymentMethod" class="form-label fw-bold">Phương thức thanh toán</label>
+                    <select id="paymentMethod" v-model="paymentMethod" class="form-select">
+                      <option value="cod">Thanh toán khi nhận hàng</option>
+                      <option value="online">Thanh toán chuyển khoản</option>
+                    </select>
                   </div>
-                  <div class="checkout__input__checkbox">
-                    <label for="paypal">
-                      Thanh toán qua thẻ/Ví điện tử
-                      <input type="checkbox" id="paypal" v-model="paymentMethod" value="online" />
-                      <span class="checkmark"></span>
-                    </label>
+                  <div v-if="paymentMethod === 'cod'" class="alert alert-info py-2">
+                    Bạn sẽ thanh toán khi nhận hàng. Đơn hàng sẽ ở trạng thái <b>Chờ xác nhận</b>.
+                  </div>
+                  <div v-if="paymentMethod === 'online'" class="alert alert-success py-2">
+                    Vui lòng chuyển khoản đến số tài khoản <b>123456789</b> tại Ngân hàng ABC.<br>
+                    Đơn hàng sẽ ở trạng thái <b>Đã thanh toán</b>.
                   </div>
                   <button type="submit" class="site-btn">ĐẶT HÀNG</button>
                 </div>
@@ -257,21 +257,7 @@ export default {
   },
   data() {
     return {
-      cartItems: [
-        // Hard-coded cart items for demo
-        {
-          product: allProducts[0],
-          quantity: 1,
-          color: 'Black',
-          size: 'L',
-        },
-        {
-          product: allProducts[2],
-          quantity: 2,
-          color: 'Blue',
-          size: 'M',
-        },
-      ],
+      cartItems: [],
       discount: 0,
       couponCode: '',
       showCouponForm: false,
@@ -338,8 +324,10 @@ export default {
     },
     // Đặt hàng
     placeOrder() {
-      // Giả lập việc đặt hàng
+      // Đặt trạng thái dựa trên phương thức thanh toán
+      let status = this.paymentMethod === 'cod' ? 'Chờ xác nhận' : 'Đã thanh toán';
       const orderData = {
+        id: Date.now(),
         cartItems: this.cartItems,
         subtotal: this.subtotal,
         discount: this.discount,
@@ -349,17 +337,36 @@ export default {
         createAccount: this.createAccount,
         paymentMethod: this.paymentMethod,
         orderNote: this.orderNote,
-      }
-
-      console.log('Đơn hàng đã được đặt:', orderData)
-      alert('Đơn hàng của bạn đã được đặt thành công! Cảm ơn bạn đã mua hàng.')
-
-      // Chuyển hướng về trang chủ sau khi đặt hàng
-      this.$router.push('/')
+        status: status,
+        createdAt: new Date().toISOString()
+      };
+      // Lưu vào localStorage
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      orders.unshift(orderData);
+      localStorage.setItem('orders', JSON.stringify(orders));
+      // Xóa giỏ hàng
+      localStorage.removeItem('cartItems');
+      window.dispatchEvent(new Event('cart-updated'));
+      alert('Đơn hàng của bạn đã được đặt thành công! Cảm ơn bạn đã mua hàng.');
+      this.$router.push('/');
     },
+
+    // Helper: Tải xuống 1 file JSON cho đơn hàng (dùng ở Header.vue)
+    downloadOrderAsJson(order) {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(order, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `order_${order.id}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+    // Để sử dụng: this.downloadOrderAsJson(order)
   },
   mounted() {
-    console.log('Checkout view mounted')
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('cartItems');
+    this.cartItems = savedCart ? JSON.parse(savedCart) : [];
   },
 }
 </script>

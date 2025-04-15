@@ -116,21 +116,7 @@ export default {
   },
   data() {
     return {
-      cartItems: [
-        // Hard-coded cart items for demo
-        { 
-          product: allProducts[0], 
-          quantity: 1,
-          color: 'Black',
-          size: 'L' 
-        },
-        { 
-          product: allProducts[2], 
-          quantity: 2,
-          color: 'Blue',
-          size: 'M' 
-        }
-      ],
+      cartItems: [],
       discountCode: '',
       discount: 0
     }
@@ -154,21 +140,45 @@ export default {
     // Tăng số lượng sản phẩm
     increaseQuantity(index) {
       this.cartItems[index].quantity++;
+      this.saveCart();
     },
-    // Giảm số lượng sản phẩm
     decreaseQuantity(index) {
       if (this.cartItems[index].quantity > 1) {
         this.cartItems[index].quantity--;
+        this.saveCart();
       }
     },
-    // Xóa sản phẩm khỏi giỏ hàng
     removeItem(index) {
       this.cartItems.splice(index, 1);
+      this.saveCart();
     },
-    // Cập nhật giỏ hàng
     updateCart() {
-      console.log('Đã cập nhật giỏ hàng');
+      this.saveCart();
       alert('Giỏ hàng đã được cập nhật!');
+    },
+    saveCart() {
+      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+      window.dispatchEvent(new Event('cart-updated'));
+      // --- Đồng bộ hóa đơn chờ thanh toán ---
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      let pendingIndex = orders.findIndex(order => order.status === 'chờ thanh toán');
+      if (pendingIndex === -1) {
+        // Tạo mới hóa đơn chờ thanh toán
+        const newOrder = {
+          id: 'HD' + Date.now(),
+          createdAt: new Date().toISOString(),
+          status: 'chờ thanh toán',
+          items: [...this.cartItems],
+          total: this.cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+        };
+        orders.push(newOrder);
+      } else {
+        // Cập nhật hóa đơn chờ thanh toán với giỏ hàng mới nhất
+        orders[pendingIndex].items = [...this.cartItems];
+        orders[pendingIndex].total = this.cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+      }
+      localStorage.setItem('orders', JSON.stringify(orders));
+      window.dispatchEvent(new Event('orders-updated'));
     },
     // Áp dụng mã giảm giá
     applyDiscount() {
@@ -186,8 +196,9 @@ export default {
     }
   },
   mounted() {
-    // Nếu muốn load giỏ hàng từ localStorage hoặc Vuex store
-    console.log('Cart view mounted')
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('cartItems');
+    this.cartItems = savedCart ? JSON.parse(savedCart) : [];
   }
 }
 </script>

@@ -1,6 +1,11 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router/client.js'
+import clientRouter from './router/client.js'
+import adminRouter from './router/admin.js'
+
+// Chọn router theo URL
+const isAdmin = window.location.pathname.startsWith('/admin');
+const router = isAdmin ? adminRouter : clientRouter
 
 // Import Bootstrap CSS and JS
 import 'bootstrap/dist/css/bootstrap.min.css'

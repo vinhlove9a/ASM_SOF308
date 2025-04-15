@@ -87,7 +87,8 @@
               </div>
               <div class="product__item__text">
                 <h6>{{ product.name }}</h6>
-                <a href="#" class="add-cart">+ Thêm vào giỏ hàng</a>
+                <button class="btn btn-outline-primary btn-sm me-2" @click="handleAddToCart(product)">+ Thêm vào giỏ hàng</button>
+                <button class="btn btn-danger btn-sm" @click="handleBuyNow(product)">Mua ngay</button>
                 <div class="rating">
                   <i
                     v-for="n in Math.floor(product.rating)"
@@ -269,6 +270,53 @@ export default {
     }
   },
   methods: {
+    handleAddToCart(product) {
+      let cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      const index = cart.findIndex(item => item.product.id === product.id);
+      if (index !== -1) {
+        cart[index].quantity += 1;
+      } else {
+        cart.push({ product, quantity: 1 });
+      }
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cart-updated'));
+      this.syncOrders();
+      alert('Đã thêm vào giỏ hàng và cập nhật hóa đơn!');
+    },
+    syncOrders() {
+      let cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      let pendingIndex = orders.findIndex(order => order.status === 'chờ thanh toán');
+      if (pendingIndex === -1) {
+        // Tạo mới hóa đơn chờ thanh toán
+        const newOrder = {
+          id: 'HD' + Date.now(),
+          createdAt: new Date().toISOString(),
+          status: 'chờ thanh toán',
+          items: [...cart],
+          total: cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+        };
+        orders.push(newOrder);
+      } else {
+        // Cập nhật hóa đơn chờ thanh toán với giỏ hàng mới nhất
+        orders[pendingIndex].items = [...cart];
+        orders[pendingIndex].total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      }
+      localStorage.setItem('orders', JSON.stringify(orders));
+      window.dispatchEvent(new Event('orders-updated'));
+    },
+    handleBuyNow(product) {
+      let cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      const index = cart.findIndex(item => item.product.id === product.id);
+      if (index !== -1) {
+        cart[index].quantity += 1;
+      } else {
+        cart.push({ product, quantity: 1 });
+      }
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cart-updated'));
+      this.$router.push('/cart');
+    },
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
     },

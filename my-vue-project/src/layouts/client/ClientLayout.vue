@@ -1,9 +1,6 @@
 <template>
   <div>
     <!-- Page Preloder -->
-    <div v-if="preloaderVisible" id="preloder">
-      <div class="loader"></div>
-    </div>
 
     <!-- Header Section Begin -->
     <header class="header">
@@ -15,7 +12,7 @@
     <main>
       <slot></slot>
     </main>
-    
+
     <!-- Footer Section Begin -->
     <Footer />
     <!-- Footer Section End -->
@@ -41,11 +38,11 @@ export default {
   name: 'ClientLayout',
   components: {
     Header,
-    Footer
+    Footer,
   },
   data() {
     return {
-      preloaderVisible: true
+      preloaderVisible: true,
     }
   },
   mounted() {
@@ -53,7 +50,7 @@ export default {
     setTimeout(() => {
       this.preloaderVisible = false
     }, 1000)
-  }
+  },
 }
 </script>
 

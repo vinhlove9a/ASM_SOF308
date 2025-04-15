@@ -1,13 +1,11 @@
 <template>
-  <div
-    class="container-fluid d-flex align-items-center justify-content-center min-vh-100 login-hero-bg"
-  >
+  <div class="container d-flex align-items-center justify-content-center min-vh-100">
     <div class="w-100" style="max-width: 420px">
       <div class="card shadow-sm p-4 border-0">
-        <h3 class="mb-4 text-center">Đăng nhập</h3>
+        <h3 class="mb-4 text-center">Login</h3>
         <form @submit.prevent="onLogin">
           <div class="mb-3">
-            <label for="username" class="form-label">Tên đăng nhập hoặc Số điện thoại</label>
+            <label for="username" class="form-label">Username/Phone</label>
             <div class="input-group">
               <span class="input-group-text bg-white"><i class="ri-user-fill"></i></span>
               <input
@@ -16,13 +14,13 @@
                 v-model="username"
                 :class="['form-control', errors.username && 'is-invalid']"
                 required
-                placeholder="Nhập tên đăng nhập hoặc số điện thoại"
+                placeholder="Enter your username or phone"
               />
               <div v-if="errors.username" class="invalid-feedback">{{ errors.username }}</div>
             </div>
           </div>
           <div class="mb-3">
-            <label for="password" class="form-label">Mật khẩu</label>
+            <label for="password" class="form-label">Password</label>
             <div class="input-group">
               <span class="input-group-text bg-white"><i class="ri-lock-2-fill"></i></span>
               <input
@@ -31,7 +29,7 @@
                 v-model="password"
                 :class="['form-control', errors.password && 'is-invalid']"
                 required
-                placeholder="Nhập mật khẩu"
+                placeholder="Enter your password"
               />
               <div v-if="errors.password" class="invalid-feedback">{{ errors.password }}</div>
               <button
@@ -45,23 +43,47 @@
             </div>
           </div>
           <div class="mb-3">
-            <label for="userType" class="form-label">Loại người dùng</label>
+            <label for="userType" class="form-label">User Type</label>
             <select id="userType" v-model="userType" class="form-select">
-              <option value="customer">Khách hàng</option>
-              <option value="employee">Nhân viên</option>
+              <option value="customer">Customer</option>
+              <option value="employee">Employee</option>
             </select>
           </div>
           <div class="d-flex justify-content-between align-items-center mb-3">
             <router-link to="/forgot-password" class="link-danger small"
-              >Quên mật khẩu?</router-link
+              >Forgot your password?</router-link
             >
           </div>
           <button type="submit" class="btn btn-danger w-100">Login</button>
         </form>
         <div class="text-center mt-3">
-          <span class="text-secondary">Chưa có tài khoản?</span>
-          <router-link to="/register" class="ms-1 link-danger fw-bold">Tạo tài khoản</router-link>
+          <span class="text-secondary">Don't have an account?</span>
+          <router-link to="/register" class="ms-1 link-danger fw-bold">Create Account</router-link>
         </div>
+      </div>
+
+      <div v-if="billHistory.length === 0" class="text-center text-secondary">
+        No bill history found.
+      </div>
+      <div v-else>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in billHistory" :key="order.id">
+              <td>{{ order.id }}</td>
+              <td>{{ formatDate(order.createdAt) }}</td>
+              <td>{{ formatPrice(order.total) }}</td>
+              <td>{{ order.status }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -82,33 +104,19 @@ export default {
     validate() {
       this.errors = {}
       if (!this.username) {
-        this.errors.username = 'Vui lòng nhập tên đăng nhập hoặc số điện thoại.'
+        this.errors.username = 'Username/Phone is required.'
       }
       if (!this.password) {
-        this.errors.password = 'Vui lòng nhập mật khẩu.'
+        this.errors.password = 'Password is required.'
       } else if (this.password.length < 6) {
-        this.errors.password = 'Mật khẩu phải có ít nhất 6 ký tự.'
+        this.errors.password = 'Password must be at least 6 characters.'
       }
       return Object.keys(this.errors).length === 0
     },
     onLogin() {
       if (!this.validate()) return
-      if (
-        this.userType === 'customer' &&
-        this.username === 'user' &&
-        this.password === 'ab123456'
-      ) {
-        this.$router.push('/')
-      } else if (
-        this.userType === 'employee' &&
-        this.username === 'admin' &&
-        this.password === 'ab123456'
-      ) {
-        this.$router.push('/admin/dashboard')
-      } else {
-        this.errors.username = 'Tài khoản hoặc mật khẩu không đúng!'
-        this.errors.password = 'Tài khoản hoặc mật khẩu không đúng!'
-      }
+      // Xử lý đăng nhập ở đây (gửi API, validate...)
+      alert('Đăng nhập thành công! (Demo)')
     },
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
